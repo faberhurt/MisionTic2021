@@ -113,10 +113,10 @@ const FormularioProductos = ({
   listaProductos,
   AgregarProducto,
 }) => {
-  const [identificador, setIdentificador] = useState();
-  const [valor, setValor] = useState();
-  const [estado, setEstado] = useState();
-  const [descripcion, setDescripcion] = useState();
+  const [identificador, setIdentificador] = useState("");
+  const [valor, setValor] = useState(0);
+  const [estado, setEstado] = useState("");
+  const [descripcion, setDescripcion] = useState("");
 
   const GuardarProducto = () => {
     console.log(
@@ -129,20 +129,32 @@ const FormularioProductos = ({
       "descripcion:",
       descripcion
     );
-    toast.success("Producto Guardado!", {
-      position: "bottom-center",
-      autoClose: 1000,
-    });
-    cambioTabla(true);
-    AgregarProducto([
-      ...listaProductos,
-      {
-        identificador: identificador,
-        valor: valor,
-        estado: estado,
-        descripcion: descripcion,
-      },
-    ]);
+    if (
+      identificador === "" ||
+      valor === 0 ||
+      estado === "" ||
+      descripcion === ""
+    ) {
+      toast.error("Ingresar Información Completa!", {
+        position: "bottom-center",
+        autoClose: 3000,
+      });
+    } else {
+      toast.success("Producto Guardado!", {
+        position: "bottom-center",
+        autoClose: 1000,
+      });
+      cambioTabla(true);
+      AgregarProducto([
+        ...listaProductos,
+        {
+          identificador: identificador,
+          valor: valor,
+          estado: estado,
+          descripcion: descripcion,
+        },
+      ]);
+    }
   };
 
   return (
@@ -161,6 +173,7 @@ const FormularioProductos = ({
           onChange={(e) => {
             setIdentificador(e.target.value);
           }}
+          required
         />
       </label>
       <label htmlFor="number" className="flex flex-col items-center m-3">
@@ -175,6 +188,7 @@ const FormularioProductos = ({
           onChange={(e) => {
             setValor(e.target.value);
           }}
+          required
         />
       </label>
 
@@ -187,6 +201,7 @@ const FormularioProductos = ({
           }}
           className="bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
           name="estado"
+          required
         >
           <option disabled>Seleccione un Opción</option>
           <option>Disponible</option>
@@ -205,10 +220,11 @@ const FormularioProductos = ({
           onChange={(e) => {
             setDescripcion(e.target.value);
           }}
+          required
         />
       </label>
       <button
-        type="button"
+        type="submit"
         className="bg-green-400 p-2 text-white rounded-lg shadow-md hover:bg-green-900"
         onClick={() => {
           GuardarProducto();
