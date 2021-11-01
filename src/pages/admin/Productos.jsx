@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -62,9 +62,9 @@ const Productos = () => {
         <TablaProductos listaProductos={productos} />
       ) : (
         <FormularioProductos
-          cambioTabla={setMostrarTabla}
+          setMostrarTabla={setMostrarTabla}
           listaProductos={productos}
-          AgregarProducto={setProductos}
+          setProductos={setProductos}
         />
       )}
       <ToastContainer position="bottom-center" autoClose={1000} />
@@ -109,56 +109,31 @@ const TablaProductos = ({ listaProductos }) => {
 };
 
 const FormularioProductos = ({
-  cambioTabla,
+  setMostrarTabla,
   listaProductos,
-  AgregarProducto,
+  setProductos,
 }) => {
-  const [identificador, setIdentificador] = useState("");
-  const [valor, setValor] = useState(0);
-  const [estado, setEstado] = useState("");
-  const [descripcion, setDescripcion] = useState("");
+  const form = useRef(null);
 
-  const GuardarProducto = () => {
-    console.log(
-      "identificador:",
-      identificador,
-      "valor:",
-      valor,
-      "estado",
-      estado,
-      "descripcion:",
-      descripcion
-    );
-    if (
-      identificador === "" ||
-      valor === 0 ||
-      estado === "" ||
-      descripcion === ""
-    ) {
-      toast.error("Ingresar Información Completa!", {
-        position: "bottom-center",
-        autoClose: 3000,
-      });
-    } else {
-      toast.success("Producto Guardado!", {
-        position: "bottom-center",
-        autoClose: 1000,
-      });
-      cambioTabla(true);
-      AgregarProducto([
-        ...listaProductos,
-        {
-          identificador: identificador,
-          valor: valor,
-          estado: estado,
-          descripcion: descripcion,
-        },
-      ]);
-    }
+  const submitForm = (e) => {
+    e.preventDefault();
+    const fd = new FormData(form.current);
+
+    const nuevoProducto = {};
+    fd.forEach((value, key) => {
+      nuevoProducto[key] = value;
+    });
+    setMostrarTabla(true);
+    setProductos([...listaProductos, nuevoProducto]);
+    toast.success("Producto Agregado!! ");
   };
 
   return (
-    <form className="flex flex-col w-full items-center justify-center">
+    <form
+      ref={form}
+      onSubmit={submitForm}
+      className="flex flex-col w-full items-center justify-center"
+    >
       <h2 className="m-9 text-center text-3xl font-extrabold text-gray-900">
         Formulario de registro de productos
       </h2>
@@ -169,10 +144,6 @@ const FormularioProductos = ({
           type="text"
           name="identificador"
           placeholder="Identificador del producto"
-          value={identificador}
-          onChange={(e) => {
-            setIdentificador(e.target.value);
-          }}
           required
         />
       </label>
@@ -184,10 +155,6 @@ const FormularioProductos = ({
           min={0}
           name="valor"
           placeholder="Valor Unitario"
-          value={valor}
-          onChange={(e) => {
-            setValor(e.target.value);
-          }}
           required
         />
       </label>
@@ -195,15 +162,14 @@ const FormularioProductos = ({
       <label htmlFor="estado" className="flex flex-col items-center m-3">
         Estado
         <select
-          value={estado}
-          onChange={(e) => {
-            setEstado(e.target.value);
-          }}
           className="bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
           name="estado"
           required
+          defaultValue={0}
         >
-          <option disabled>Seleccione un Opción</option>
+          <option disabled value={0}>
+            Seleccione un Opción
+          </option>
           <option>Disponible</option>
           <option>No Disponible</option>
         </select>
@@ -216,19 +182,12 @@ const FormularioProductos = ({
           type="text"
           name="descripcion"
           placeholder="Descripcion del producto"
-          value={descripcion}
-          onChange={(e) => {
-            setDescripcion(e.target.value);
-          }}
           required
         />
       </label>
       <button
         type="submit"
         className="bg-green-400 p-2 text-white rounded-lg shadow-md hover:bg-green-900"
-        onClick={() => {
-          GuardarProducto();
-        }}
       >
         Registrar
       </button>
