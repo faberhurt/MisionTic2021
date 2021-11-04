@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { nanoid } from "nanoid";
+
 const productosBackend = [
   {
     identificador: "product001",
@@ -73,38 +75,121 @@ const Productos = () => {
 };
 
 const TablaProductos = ({ listaProductos }) => {
-  useEffect(() => {
-    console.log("listado de productos Tabla:");
-  }, [listaProductos]);
+  const formEdit = useRef(null);
+
+  const submitEdit = (e) => {
+    e.preventDefault();
+    const fd = new FormData(formEdit.current);
+
+    const productoEditado = {};
+    fd.forEach((value, key) => {
+      productoEditado[key] = value;
+    });
+    listaProductos(true);
+    toast.success("Producto Agregado!! ");
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="w-full flex flex-col items-center justify-center">
       <h2 className="m-9 text-center text-3xl font-extrabold text-gray-900">
         Todos lo Productos
       </h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Identificación Producto</th>
-            <th>Valor Producto</th>
-            <th>Estado Producto</th>
-            <th>Descripción Producto</th>
-          </tr>
-        </thead>
-        <tbody>
-          {listaProductos.map((producto) => {
-            return (
-              <tr>
-                <td>{producto.identificador}</td>
-                <td>{producto.valor}</td>
-                <td>{producto.estado}</td>
-                <td>{producto.descripcion}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <form ref={formEdit} onSubmit={submitEdit} className="w-full">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Identificación Producto</th>
+              <th>Valor Producto</th>
+              <th>Estado Producto</th>
+              <th>Descripción Producto</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {listaProductos.map((producto) => {
+              return <FilaProducto key={nanoid()} producto={producto} />;
+            })}
+          </tbody>
+        </table>
+      </form>
     </div>
+  );
+};
+
+const FilaProducto = ({ producto }) => {
+  const [edit, setEdit] = useState(false);
+  return (
+    <tr>
+      {edit ? (
+        <>
+          <td>
+            <input
+              className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
+              type="text"
+              name="identificador"
+              defaultValue={producto.identificador}
+            />
+          </td>
+          <td>
+            <input
+              className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
+              type="number"
+              name="valor"
+              defaultValue={producto.valor}
+            />
+          </td>
+          <td>
+            <select
+              className="bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
+              name="estado"
+              required
+              defaultValue={0}
+            >
+              <option disabled value={0}>
+                Seleccione un Opción
+              </option>
+              <option>Disponible</option>
+              <option>No Disponible</option>
+            </select>
+          </td>
+          <td>
+            <input
+              className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
+              type="text"
+              name="descripcion"
+              defaultValue={producto.descripcion}
+            />
+          </td>
+        </>
+      ) : (
+        <>
+          <td>{producto.identificador}</td>
+          <td>{producto.valor}</td>
+          <td>{producto.estado}</td>
+          <td>{producto.descripcion}</td>
+        </>
+      )}
+
+      <td>
+        <div className="flex w-full justify-around">
+          {edit ? (
+            <button type="submit">
+              <i
+                onClick={() => setEdit(!edit)}
+                className="fas fa-check hover:text-green-500"
+              />{" "}
+            </button>
+          ) : (
+            <i
+              onClick={() => setEdit(!edit)}
+              className="fas fa-pencil-alt hover:text-green-500"
+            />
+          )}
+
+          <i className="fas fa-trash hover:text-red-500" />
+        </div>
+      </td>
+    </tr>
   );
 };
 
@@ -124,7 +209,6 @@ const FormularioProductos = ({
       nuevoProducto[key] = value;
     });
     setMostrarTabla(true);
-    setProductos([...listaProductos, nuevoProducto]);
     toast.success("Producto Agregado!! ");
   };
 
