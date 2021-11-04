@@ -75,49 +75,59 @@ const Productos = () => {
 };
 
 const TablaProductos = ({ listaProductos }) => {
-  const formEdit = useRef(null);
+  const [busqueda, setBusqueda] = useState("");
 
-  const submitEdit = (e) => {
-    e.preventDefault();
-    const fd = new FormData(formEdit.current);
+  useEffect(() => {
+    console.log("busqueda", busqueda);
+  }, [busqueda]);
 
-    const productoEditado = {};
-    fd.forEach((value, key) => {
-      productoEditado[key] = value;
-    });
-    listaProductos(true);
-    toast.success("Producto Agregado!! ");
-  };
+  useEffect(() => {}, [listaProductos]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
+      <input
+      value
+        placeholder="Buscar Producto"
+        className="self-start border border-gray-800 bg-blue-100 border-gray-900 p-2 rounded-lg m-2"
+      />
       <h2 className="m-9 text-center text-3xl font-extrabold text-gray-900">
         Todos lo Productos
       </h2>
-      <form ref={formEdit} onSubmit={submitEdit} className="w-full">
-        <table class="tabla">
-          <thead>
-            <tr>
-              <th>Identificación Producto</th>
-              <th>Valor Producto</th>
-              <th>Estado Producto</th>
-              <th>Descripción Producto</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {listaProductos.map((producto) => {
-              return <FilaProducto key={nanoid()} producto={producto} />;
-            })}
-          </tbody>
-        </table>
-      </form>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Identificación Producto</th>
+            <th>Valor Producto</th>
+            <th>Estado Producto</th>
+            <th>Descripción Producto</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {listaProductos.map((producto) => {
+            return <FilaProducto key={nanoid()} producto={producto} />;
+          })}
+        </tbody>
+      </table>
     </div>
   );
 };
 
+const actualizarVehiculo = () => {};
+
 const FilaProducto = ({ producto }) => {
   const [edit, setEdit] = useState(false);
+
+  const [infoProducto, setInfoProducto] = useState({
+    identificador: producto.identificador,
+    valor: producto.identificador,
+    estado: producto.estado,
+    descripcion: producto.descripcion,
+  });
+  const actualizarProducto = () => {
+    console.log(infoProducto);
+  };
+
   return (
     <tr>
       {edit ? (
@@ -126,24 +136,37 @@ const FilaProducto = ({ producto }) => {
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="text"
-              name="identificador"
-              defaultValue={producto.identificador}
+              placeholder={producto.identificador}
+              value={infoProducto.identificador}
+              onChange={(e) =>
+                setInfoProducto({
+                  ...infoProducto,
+                  identificador: e.target.value,
+                })
+              }
             />
           </td>
           <td>
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="number"
-              name="valor"
-              defaultValue={producto.valor}
+              placeholder={producto.valor}
+              value={infoProducto.valor}
+              onChange={(e) =>
+                setInfoProducto({ ...infoProducto, valor: e.target.value })
+              }
             />
           </td>
           <td>
             <select
               className="bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
-              name="estado"
               required
               defaultValue={0}
+              placeholder={producto.estado}
+              value={infoProducto.estado}
+              onChange={(e) =>
+                setInfoProducto({ ...infoProducto, estado: e.target.value })
+              }
             >
               <option disabled value={0}>
                 Seleccione un Opción
@@ -156,8 +179,15 @@ const FilaProducto = ({ producto }) => {
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="text"
-              name="descripcion"
+              placeholder={producto.identificador}
+              value={infoProducto.descripcion}
               defaultValue={producto.descripcion}
+              onChange={(e) =>
+                setInfoProducto({
+                  ...infoProducto,
+                  descripcion: e.target.value,
+                })
+              }
             />
           </td>
         </>
@@ -173,12 +203,10 @@ const FilaProducto = ({ producto }) => {
       <td>
         <div className="flex w-full justify-around">
           {edit ? (
-            <button type="submit">
-              <i
-                onClick={() => setEdit(!edit)}
-                className="fas fa-check hover:text-green-500"
-              />{" "}
-            </button>
+            <i
+              onClick={() => actualizarProducto()}
+              className="fas fa-check hover:text-green-500"
+            />
           ) : (
             <i
               onClick={() => setEdit(!edit)}
@@ -211,6 +239,8 @@ const FormularioProductos = ({
     setMostrarTabla(true);
     toast.success("Producto Agregado!! ");
   };
+
+  const eliminarProducto = () => {};
 
   return (
     <form
@@ -270,7 +300,7 @@ const FormularioProductos = ({
         />
       </label>
       <button
-        type="submit"
+        onClick={() => eliminarProducto()}
         className="bg-green-400 p-2 text-white rounded-lg shadow-md hover:bg-green-900"
       >
         Registrar
