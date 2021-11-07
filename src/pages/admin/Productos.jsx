@@ -1,29 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import { nanoid } from "nanoid";
-
-const productosBackend = [
-  {
-    identificador: "product001",
-    valor: "1000",
-    estado: "available",
-    descripcion: "primer producto",
-  },
-  {
-    identificador: "product002",
-    valor: "2000",
-    estado: "available",
-    descripcion: "segundo producto",
-  },
-  {
-    identificador: "product003",
-    valor: "3000",
-    estado: "unavailable",
-    descripcion: "tercer producto",
-  },
-];
+import axios from "axios";
 
 const Productos = () => {
   const [mostrarTabla, setMostrarTabla] = useState(true);
@@ -32,7 +11,16 @@ const Productos = () => {
   const [colorBoton, setColorBoton] = useState("");
 
   useEffect(() => {
-    setProductos(productosBackend);
+    const options = { method: "GET", url: "http://localhost:5000/productos" };
+
+    axios
+      .request(options)
+      .then(function (response) {
+        setProductos(response.data);
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
   }, []);
 
   useEffect(() => {
@@ -121,14 +109,12 @@ const TablaProductos = ({ listaProductos }) => {
   );
 };
 
-const actualizarVehiculo = () => {};
-
 const FilaProducto = ({ producto }) => {
   const [edit, setEdit] = useState(false);
 
   const [infoProducto, setInfoProducto] = useState({
     identificador: producto.identificador,
-    valor: producto.identificador,
+    valor: producto.valor,
     estado: producto.estado,
     descripcion: producto.descripcion,
   });
@@ -236,7 +222,7 @@ const FormularioProductos = ({
 }) => {
   const form = useRef(null);
 
-  const submitForm = (e) => {
+  const submitForm = async (e) => {
     e.preventDefault();
     const fd = new FormData(form.current);
 
@@ -244,8 +230,31 @@ const FormularioProductos = ({
     fd.forEach((value, key) => {
       nuevoProducto[key] = value;
     });
+
+    const options = {
+      method: "POST",
+      url: "http://localhost:5000/productos/nuevo",
+      headers: { "Content-Type": "application/json" },
+      data: {
+        identificador: nuevoProducto.identificador,
+        valor: nuevoProducto.valor,
+        estado: nuevoProducto.estado,
+        descripcion: nuevoProducto.descripcion,
+      },
+    };
+
+    await axios
+      .request(options)
+      .then(function (response) {
+        console.log(response.data);
+        toast.success("Producto Agregado!! ");
+      })
+      .catch(function (error) {
+        console.error(error);
+        toast.error("Producto No Agregado!! ");
+      });
+
     setMostrarTabla(true);
-    toast.success("Producto Agregado!! ");
   };
 
   const eliminarProducto = () => {};
