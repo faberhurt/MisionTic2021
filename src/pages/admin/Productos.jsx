@@ -3,15 +3,17 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { nanoid } from "nanoid";
 import axios from "axios";
+import { Tooltip } from "@material-ui/core";
+import { Dialog } from "@material-ui/core";
 
 const Productos = () => {
   const [mostrarTabla, setMostrarTabla] = useState(true);
   const [textoBoton, setTextoBoton] = useState("Agregar Producto");
   const [productos, setProductos] = useState([]);
   const [colorBoton, setColorBoton] = useState("");
-  const [ejecutarConsulta,setEjecutarConsulta]=useState(true)
+  const [ejecutarConsulta, setEjecutarConsulta] = useState(true);
 
-  useEffect(() => {
+
     const obtenerProductos = async () => {
       const options = { method: "GET", url: "http://localhost:5000/productos" };
 
@@ -23,17 +25,21 @@ const Productos = () => {
         .catch(function (error) {
           console.error(error);
         });
+        setEjecutarConsulta(false);
     };
-    if(ejecutarConsulta){
-      obtenerProductos();
-      setEjecutarConsulta(false)
-
-    }
-  }, [ejecutarConsulta])
-
-  useEffect(() => {
-    setEjecutarConsulta(true)
-  }, [mostrarTabla]);
+    useEffect(() => {
+      console.log('consulta', ejecutarConsulta);
+      if (ejecutarConsulta) {
+        obtenerProductos();
+      }
+    }, [ejecutarConsulta]);
+  
+    useEffect(() => {
+      //obtener lista de vehículos desde el backend
+      if (mostrarTabla) {
+        setEjecutarConsulta(true);
+      }
+    }, [mostrarTabla]);
 
   useEffect(() => {
     if (mostrarTabla) {
@@ -61,7 +67,10 @@ const Productos = () => {
         </button>
       </div>
       {mostrarTabla ? (
-        <TablaProductos listaProductos={productos} setEjecutarConsulta={setEjecutarConsulta}/>
+        <TablaProductos
+          listaProductos={productos}
+          setEjecutarConsulta={setEjecutarConsulta}
+        />
       ) : (
         <FormularioProductos
           setMostrarTabla={setMostrarTabla}
@@ -74,7 +83,7 @@ const Productos = () => {
   );
 };
 
-const TablaProductos = ({ listaProductos,setEjecutarConsulta }) => {
+const TablaProductos = ({ listaProductos, setEjecutarConsulta }) => {
   useEffect(() => {}, [listaProductos]);
 
   return (
@@ -94,7 +103,13 @@ const TablaProductos = ({ listaProductos,setEjecutarConsulta }) => {
         </thead>
         <tbody>
           {listaProductos.map((producto) => {
-            return <FilaProducto key={nanoid()} producto={producto} setEjecutarConsulta={setEjecutarConsulta} />;
+            return (
+              <FilaProducto
+                key={nanoid()}
+                producto={producto}
+                setEjecutarConsulta={setEjecutarConsulta}
+              />
+            );
           })}
         </tbody>
       </table>
@@ -102,9 +117,10 @@ const TablaProductos = ({ listaProductos,setEjecutarConsulta }) => {
   );
 };
 
-const FilaProducto = ({ producto,setEjecutarConsulta }) => {
-
+const FilaProducto = ({ producto, setEjecutarConsulta }) => {
   const [edit, setEdit] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+
   const [infoNuevoProducto, setInfoNuevoProducto] = useState({
     identificador: producto.identificador,
     valor: producto.valor,
@@ -128,7 +144,7 @@ const FilaProducto = ({ producto,setEjecutarConsulta }) => {
         console.log(response.data);
         toast.success("Producto Modificado!! ");
         setEdit(false);
-        setEjecutarConsulta(true)
+        setEjecutarConsulta(true);
       })
       .catch(function (error) {
         console.error(error);
@@ -136,23 +152,26 @@ const FilaProducto = ({ producto,setEjecutarConsulta }) => {
       });
   };
 
-  const eliminarProducto = async ()=>{
+  const eliminarProducto = async () => {
     const options = {
-      method: 'DELETE',
-      url: 'http://localhost:5000/productos/eliminar',
-      headers: {'Content-Type': 'application/json'},
-      data: {id:producto._id}
+      method: "DELETE",
+      url: "http://localhost:5000/productos/eliminar",
+      headers: { "Content-Type": "application/json" },
+      data: { id: producto._id },
     };
-    
-    await axios.request(options).then(function (response) {
-      console.log(response.data);
-      toast.success("Producto Eliminado!! ");
-      setEjecutarConsulta(true)
-    }).catch(function (error) {
-      console.error(error);
-      toast.error("Error al eliminar!! ");
-    });
-  }
+
+    await axios
+      .request(options)
+      .then(function (response) {
+        console.log(response.data);
+        toast.success("Producto Eliminado Refrescar Navegador!! ");
+        setEjecutarConsulta(true);
+      })
+      .catch(function (error) {
+        console.error(error);
+        toast.error("Error al eliminar!! ");
+      });
+  };
 
   return (
     <tr>
@@ -229,22 +248,58 @@ const FilaProducto = ({ producto,setEjecutarConsulta }) => {
       <td>
         <div className="flex w-full justify-around">
           {edit ? (
-            <i
-              onClick={() => actualizarProducto()}
-              className="fas fa-check hover:text-green-500"
-            />
+            <>
+              <Tooltip title="Confirmar Edición">
+                <i
+                  onClick={() => actualizarProducto()}
+                  className="fas fa-check hover:text-green-500"
+                />
+              </Tooltip>
+              <Tooltip title="Cancelar Edición">
+                <i
+                  onClick={() => setEdit(!edit)}
+                  className="fas fa-ban hover:text-red-500"
+                />
+              </Tooltip>
+            </>
           ) : (
-            <i
-              onClick={() => setEdit(!edit)}
-              className="fas fa-pencil-alt hover:text-green-500"
-            />
+            <>
+              <Tooltip title="Editar Producto">
+                <i
+                  onClick={() => setEdit(!edit)}
+                  className="fas fa-pencil-alt hover:text-green-500"
+                />
+              </Tooltip>
+              <Tooltip title="Eliminar Producto">
+                <i
+                  onClick={() => setOpenDialog(true)}
+                  className="fas fa-trash hover:text-red-500"
+                />
+              </Tooltip>
+            </>
           )}
-
-          <i
-            onClick={() => eliminarProducto()}
-            className="fas fa-trash hover:text-red-500"
-          />
         </div>
+        <Dialog open={openDialog}>
+          <div className="p-8 flex flex-col bg-gray-300 rounded">
+            <h1 className="text-gray-900 text-2xl font-bold">
+              Desea eliminar el producto
+            </h1>
+            <div
+              onClick={() => eliminarProducto()}
+              className="flex w-full items-center justify-center m-4"
+            >
+              <button className="mx-2 px-6 py-2 bg-green-500 text-white m-4 hover:bg-green-700 rounded-md shadow-md">
+                SI
+              </button>
+              <button
+                onClick={() => setOpenDialog(false)}
+                className="mx-2 px-4 py-2 bg-red-500 text-white hover:bg-red-700 rounded-md shadow-md"
+              >
+                NO
+              </button>
+            </div>
+          </div>
+        </Dialog>
       </td>
     </tr>
   );
