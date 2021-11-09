@@ -13,33 +13,32 @@ const Productos = () => {
   const [colorBoton, setColorBoton] = useState("");
   const [ejecutarConsulta, setEjecutarConsulta] = useState(true);
 
+  const obtenerProductos = async () => {
+    const options = { method: "GET", url: "http://localhost:5000/productos" };
 
-    const obtenerProductos = async () => {
-      const options = { method: "GET", url: "http://localhost:5000/productos" };
+    await axios
+      .request(options)
+      .then(function (response) {
+        setProductos(response.data);
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+    setEjecutarConsulta(false);
+  };
+  useEffect(() => {
+    console.log("consulta", ejecutarConsulta);
+    if (ejecutarConsulta) {
+      obtenerProductos();
+    }
+  }, [ejecutarConsulta]);
 
-      await axios
-        .request(options)
-        .then(function (response) {
-          setProductos(response.data);
-        })
-        .catch(function (error) {
-          console.error(error);
-        });
-        setEjecutarConsulta(false);
-    };
-    useEffect(() => {
-      console.log('consulta', ejecutarConsulta);
-      if (ejecutarConsulta) {
-        obtenerProductos();
-      }
-    }, [ejecutarConsulta]);
-  
-    useEffect(() => {
-      //obtener lista de vehículos desde el backend
-      if (mostrarTabla) {
-        setEjecutarConsulta(true);
-      }
-    }, [mostrarTabla]);
+  useEffect(() => {
+    //obtener lista de vehículos desde el backend
+    if (mostrarTabla) {
+      setEjecutarConsulta(true);
+    }
+  }, [mostrarTabla]);
 
   useEffect(() => {
     if (mostrarTabla) {
@@ -84,10 +83,28 @@ const Productos = () => {
 };
 
 const TablaProductos = ({ listaProductos, setEjecutarConsulta }) => {
-  useEffect(() => {}, [listaProductos]);
+  const [busqueda, setBusqueda] = useState("");
+  const [productoFiltrado, setProductoFiltrado] = useState(listaProductos);
+
+  useEffect(() => {
+    setProductoFiltrado(
+      listaProductos.filter((elemento) => {
+        console.log("elemento", elemento);
+        return JSON.stringify(elemento)
+          .toLowerCase()
+          .includes(busqueda.toLowerCase());
+      })
+    );
+  }, [busqueda, listaProductos]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
+      <input
+        value={busqueda}
+        onChange={(e) => setBusqueda(e.target.value)}
+        placeholder="Buscar Producto"
+        className="self-start border-2 bg-blue-100 border-gray-900 p-2 rounded-lg m-2"
+      />
       <h2 className="m-9 text-center text-3xl font-extrabold text-gray-900">
         Todos lo Productos
       </h2>
@@ -102,7 +119,7 @@ const TablaProductos = ({ listaProductos, setEjecutarConsulta }) => {
           </tr>
         </thead>
         <tbody>
-          {listaProductos.map((producto) => {
+          {productoFiltrado.map((producto) => {
             return (
               <FilaProducto
                 key={nanoid()}
@@ -171,6 +188,7 @@ const FilaProducto = ({ producto, setEjecutarConsulta }) => {
         console.error(error);
         toast.error("Error al eliminar!! ");
       });
+    setOpenDialog(false);
   };
 
   return (
