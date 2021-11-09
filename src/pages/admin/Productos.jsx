@@ -9,19 +9,31 @@ const Productos = () => {
   const [textoBoton, setTextoBoton] = useState("Agregar Producto");
   const [productos, setProductos] = useState([]);
   const [colorBoton, setColorBoton] = useState("");
+  const [ejecutarConsulta,setEjecutarConsulta]=useState(true)
 
   useEffect(() => {
-    const options = { method: "GET", url: "http://localhost:5000/productos" };
+    const obtenerProductos = async () => {
+      const options = { method: "GET", url: "http://localhost:5000/productos" };
 
-    axios
-      .request(options)
-      .then(function (response) {
-        setProductos(response.data);
-      })
-      .catch(function (error) {
-        console.error(error);
-      });
-  }, []);
+      await axios
+        .request(options)
+        .then(function (response) {
+          setProductos(response.data);
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+    };
+    if(ejecutarConsulta){
+      obtenerProductos();
+      setEjecutarConsulta(false)
+
+    }
+  }, [ejecutarConsulta])
+
+  useEffect(() => {
+    setEjecutarConsulta(true)
+  }, [mostrarTabla]);
 
   useEffect(() => {
     if (mostrarTabla) {
@@ -49,7 +61,7 @@ const Productos = () => {
         </button>
       </div>
       {mostrarTabla ? (
-        <TablaProductos listaProductos={productos} />
+        <TablaProductos listaProductos={productos} setEjecutarConsulta={setEjecutarConsulta}/>
       ) : (
         <FormularioProductos
           setMostrarTabla={setMostrarTabla}
@@ -62,30 +74,11 @@ const Productos = () => {
   );
 };
 
-const TablaProductos = ({ listaProductos }) => {
-  const [busqueda, setBusqueda] = useState("");
-  const [productoFiltrado, setProductoFiltrado] = useState(listaProductos);
-
-  useEffect(() => {
-    setProductoFiltrado(
-      listaProductos.filter((elemento) => {
-        return JSON.stringify(elemento)
-          .toLowerCase()
-          .includes(busqueda.toLowerCase());
-      })
-    );
-  }, [busqueda]);
-
+const TablaProductos = ({ listaProductos,setEjecutarConsulta }) => {
   useEffect(() => {}, [listaProductos]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center">
-      <input
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        placeholder="Buscar Producto"
-        className="self-start border-2 border-gray-800 bg-blue-100 border-gray-900 p-2 rounded-lg m-2"
-      />
       <h2 className="m-9 text-center text-3xl font-extrabold text-gray-900">
         Todos lo Productos
       </h2>
@@ -100,8 +93,8 @@ const TablaProductos = ({ listaProductos }) => {
           </tr>
         </thead>
         <tbody>
-          {productoFiltrado.map((producto) => {
-            return <FilaProducto key={nanoid()} producto={producto} />;
+          {listaProductos.map((producto) => {
+            return <FilaProducto key={nanoid()} producto={producto} setEjecutarConsulta={setEjecutarConsulta} />;
           })}
         </tbody>
       </table>
@@ -109,18 +102,57 @@ const TablaProductos = ({ listaProductos }) => {
   );
 };
 
-const FilaProducto = ({ producto }) => {
-  const [edit, setEdit] = useState(false);
+const FilaProducto = ({ producto,setEjecutarConsulta }) => {
 
-  const [infoProducto, setInfoProducto] = useState({
+  const [edit, setEdit] = useState(false);
+  const [infoNuevoProducto, setInfoNuevoProducto] = useState({
     identificador: producto.identificador,
     valor: producto.valor,
     estado: producto.estado,
     descripcion: producto.descripcion,
   });
-  const actualizarProducto = () => {
-    console.log(infoProducto);
+
+  const actualizarProducto = async () => {
+    console.log(infoNuevoProducto);
+    //enviar info a backend
+    const options = {
+      method: "PATCH",
+      url: "http://localhost:5000/productos/editar",
+      headers: { "Content-Type": "application/json" },
+      data: { ...infoNuevoProducto, id: producto._id },
+    };
+
+    await axios
+      .request(options)
+      .then(function (response) {
+        console.log(response.data);
+        toast.success("Producto Modificado!! ");
+        setEdit(false);
+        setEjecutarConsulta(true)
+      })
+      .catch(function (error) {
+        console.error(error);
+        toast.error("Error en la modificacion!! ");
+      });
   };
+
+  const eliminarProducto = async ()=>{
+    const options = {
+      method: 'DELETE',
+      url: 'http://localhost:5000/productos/eliminar',
+      headers: {'Content-Type': 'application/json'},
+      data: {id:producto._id}
+    };
+    
+    await axios.request(options).then(function (response) {
+      console.log(response.data);
+      toast.success("Producto Eliminado!! ");
+      setEjecutarConsulta(true)
+    }).catch(function (error) {
+      console.error(error);
+      toast.error("Error al eliminar!! ");
+    });
+  }
 
   return (
     <tr>
@@ -130,11 +162,10 @@ const FilaProducto = ({ producto }) => {
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="text"
-              placeholder={producto.identificador}
-              value={infoProducto.identificador}
+              value={infoNuevoProducto.identificador}
               onChange={(e) =>
-                setInfoProducto({
-                  ...infoProducto,
+                setInfoNuevoProducto({
+                  ...infoNuevoProducto,
                   identificador: e.target.value,
                 })
               }
@@ -144,22 +175,25 @@ const FilaProducto = ({ producto }) => {
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="number"
-              placeholder={producto.valor}
-              value={infoProducto.valor}
+              value={infoNuevoProducto.valor}
               onChange={(e) =>
-                setInfoProducto({ ...infoProducto, valor: e.target.value })
+                setInfoNuevoProducto({
+                  ...infoNuevoProducto,
+                  valor: e.target.value,
+                })
               }
             />
           </td>
           <td>
             <select
               className="bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
-              required
-              defaultValue={0}
-              placeholder={producto.estado}
-              value={infoProducto.estado}
+              name="estado"
+              value={infoNuevoProducto.estado}
               onChange={(e) =>
-                setInfoProducto({ ...infoProducto, estado: e.target.value })
+                setInfoNuevoProducto({
+                  ...infoNuevoProducto,
+                  estado: e.target.value,
+                })
               }
             >
               <option disabled value={0}>
@@ -173,12 +207,10 @@ const FilaProducto = ({ producto }) => {
             <input
               className="border bg-gray-50 border-gray-600 p-2 rounded-lg m-2"
               type="text"
-              placeholder={producto.identificador}
-              value={infoProducto.descripcion}
-              defaultValue={producto.descripcion}
+              value={infoNuevoProducto.descripcion}
               onChange={(e) =>
-                setInfoProducto({
-                  ...infoProducto,
+                setInfoNuevoProducto({
+                  ...infoNuevoProducto,
                   descripcion: e.target.value,
                 })
               }
@@ -208,7 +240,10 @@ const FilaProducto = ({ producto }) => {
             />
           )}
 
-          <i className="fas fa-trash hover:text-red-500" />
+          <i
+            onClick={() => eliminarProducto()}
+            className="fas fa-trash hover:text-red-500"
+          />
         </div>
       </td>
     </tr>
@@ -251,13 +286,11 @@ const FormularioProductos = ({
       })
       .catch(function (error) {
         console.error(error);
-        toast.error("Producto No Agregado!! ");
+        toast.error("Producto No agregado!! ");
       });
 
     setMostrarTabla(true);
   };
-
-  const eliminarProducto = () => {};
 
   return (
     <form
@@ -317,7 +350,7 @@ const FormularioProductos = ({
         />
       </label>
       <button
-        onClick={() => eliminarProducto()}
+        type="submit"
         className="bg-green-400 p-2 text-white rounded-lg shadow-md hover:bg-green-900"
       >
         Registrar
